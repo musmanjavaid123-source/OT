@@ -42,22 +42,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Usman Javaid — Front-End Developer",
+  title: "Ottoman — Front-End Developer",
   description:
     "Front-End Developer and Web Development Specialist with experience at Lacoste and Mastercard. Skilled in responsive web design, UI/UX implementation, and modern web interfaces.",
-  metadataBase: new URL("https://usmanjavaid.dev"),
+  metadataBase: new URL("https://ottoman.dev"),
   openGraph: {
-    title: "Usman Javaid — Front-End Developer",
+    title: "Ottoman — Front-End Developer",
     description:
       "Front-End Developer & Web Development Specialist. Lacoste, Mastercard, BS Information Technology.",
-    url: "https://usmanjavaid.dev",
-    siteName: "Usman Javaid Portfolio",
+    url: "https://ottoman.dev",
+    siteName: "Ottoman Portfolio",
     images: [
       {
         url: "/og.jpg",
         width: 1200,
         height: 630,
-        alt: "Usman Javaid — Front-End Developer",
+        alt: "Ottoman — Front-End Developer",
       },
     ],
     locale: "en_US",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Usman Javaid — Front-End Developer",
+    title: "Ottoman — Front-End Developer",
     description:
       "Front-End Developer and Web Development Specialist based in Warsaw, Poland.",
     images: ["/og.jpg"],

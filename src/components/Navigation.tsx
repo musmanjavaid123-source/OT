@@ -127,7 +127,7 @@ export function Navigation() {
                   : "border border-[var(--ink)] text-[var(--ink)] bg-transparent"
               }`}
             >
-              UJ
+              OT
             </div>
 
             {/* Full Name (fades out after scrolling 40px) */}
@@ -218,7 +218,7 @@ export function Navigation() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[var(--ink)] text-white flex items-center justify-center font-mono text-xs font-semibold">
-              UJ
+              OT
             </div>
             <span className="font-sans font-bold text-sm text-[var(--ink)]">
               {PROFILE.name}

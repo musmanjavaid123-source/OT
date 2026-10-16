@@ -1,6 +1,6 @@
-# Usman Javaid — Senior Front-End Developer Portfolio
+# Ottoman — Senior Front-End Developer Portfolio
 
-A quiet, editorial, high-performance personal portfolio built for **Usman Javaid** (Front-End Developer & Web Development Specialist, Warsaw, Poland). Designed in the spirit of an Awwwards "Site of the Day" with a minimalist, black-and-white-and-gray palette on a warm `#f4f2ee` paper canvas.
+A quiet, editorial, high-performance personal portfolio built for **Ottoman** (Front-End Developer & Web Development Specialist, Warsaw, Poland). Designed in the spirit of an Awwwards "Site of the Day" with a minimalist, black-and-white-and-gray palette on a warm `#f4f2ee` paper canvas.
 
 ---
 
@@ -101,3 +101,37 @@ Brand logos in `public/logos/` are official SVGs licensed under MIT and respecti
   - Desktop 1440×900: `document.documentElement.scrollWidth === innerWidth` (0 horizontal overflow).
   - Mobile 390×844: `document.documentElement.scrollWidth === innerWidth` (0 horizontal overflow).
   - Runtime console: 0 errors detected.
+
+---
+
+## 7. How to Deploy to Hostinger
+
+### Method 1: Hostinger Web / Cloud Hosting via hPanel (Recommended)
+This portfolio is configured for pure static export (`output: "export"`), generating an optimized static bundle in the `out/` folder:
+
+1. **Generate the deployment archive**:
+   ```bash
+   npm run bundle:hostinger
+   ```
+   This creates a ready-to-upload `hostinger-deploy.zip` (around ~2.6 MB).
+2. **Log into Hostinger**:
+   - Open **hPanel** (hostinger.com) and navigate to **Websites** → click **Manage** next to your domain.
+3. **Open File Manager**:
+   - Go to **Files** → **File Manager** → click **Access files of [your domain]**.
+   - Double-click into the `public_html` directory.
+   - Delete any default `default.php` placeholder file if present.
+4. **Upload & Extract**:
+   - Click the **Upload** button in the top toolbar → select **File** → choose `hostinger-deploy.zip`.
+   - Right-click `hostinger-deploy.zip` in File Manager → select **Extract**.
+   - Extract files directly into `public_html` so that `index.html`, `_next/`, and assets reside directly in `public_html/`.
+   - Delete the `.zip` file after extracting.
+5. **Enable SSL**:
+   - Go to **Security** → **SSL** in hPanel to ensure your free Let's Encrypt SSL certificate is active.
+   - Your site will be live immediately with zero server maintenance and maximum LiteSpeed caching!
+
+### Method 2: Hostinger VPS (Ubuntu + Nginx + PM2)
+If you are using a Hostinger VPS:
+1. Clone your repository: `git clone <repo-url>`
+2. Run `npm install && npm run build`
+3. Start process: `pm2 start npm --name "portfolio" -- start`
+4. Reverse proxy port 3000 to port 80/443 in `/etc/nginx/sites-available/default`.

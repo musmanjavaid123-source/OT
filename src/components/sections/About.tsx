@@ -77,7 +77,7 @@ export function About() {
   return (
     <section
       id="about"
-      aria-label="About Usman Javaid"
+      aria-label="About Ottoman"
       className="section-vertical relative w-full overflow-hidden border-t border-[var(--line)]"
     >
       <div className="section-container">
@@ -96,7 +96,7 @@ export function About() {
             <div>
               <p className="tag-mono text-[var(--mute)] mb-4">Profile Overview</p>
               <h3 className="font-sans font-bold text-2xl sm:text-3xl tracking-tight text-[var(--ink)] mb-6">
-                Hi, I&apos;m {PROFILE.name.split(" ")[0]}.
+                Hi, I&apos;m {PROFILE.name}.
               </h3>
               <p className="font-sans text-[var(--ink-2)] text-base leading-relaxed mb-6">
                 {PROFILE.resumeSummary}
@@ -146,7 +146,7 @@ export function About() {
                 <span
                   className="font-mono text-[7px] text-white/70 whitespace-nowrap uppercase tracking-widest rotate-90 select-none animate-marquee"
                 >
-                  USMAN JAVAID · DEV
+                  OTTOMAN · DEV
                 </span>
               </div>
 
@@ -211,8 +211,9 @@ export function About() {
                         <div className="relative w-full h-full rounded-lg overflow-hidden bg-white">
                           <Image
                             src="/portrait-bust.webp"
-                            alt="Usman Javaid"
+                            alt="Ottoman"
                             fill
+                            unoptimized
                             className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>

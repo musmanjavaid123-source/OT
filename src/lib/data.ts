@@ -87,22 +87,22 @@ export interface AchievementItem {
 }
 
 export const PROFILE: Profile = {
-  name: "Usman Javaid",
-  firstName: "USMAN",
-  lastName: "JAVAID",
+  name: "Ottoman",
+  firstName: "OTTOMAN",
+  lastName: "",
   role: "Front-End Developer",
-  email: "musmanjavaid123@gmail.com",
+  email: "mangmnt.imuj@gmail.com",
   phone: "+48 571992607",
   phoneHref: "tel:+48571992607",
   location: "Szczęsna 5C, Warsaw, Poland",
   resumeSummary:
     "Front-End Developer and Web Development Specialist with experience in building responsive, user-friendly websites and optimizing digital experiences. Skilled in translating UI/UX designs into functional web interfaces, developing modern websites, and improving website performance and usability.",
   github: null, // Note: not in resume.pdf
-  linkedin: "https://www.linkedin.com/in/ottoman-javaid-83baa1437",
+  linkedin: "https://www.linkedin.com/in/ottoman19",
   resumePath: "/resume.pdf",
   department: "Front-End Engineering",
   validTill: "Present",
-  idNumber: "UJ-4857199",
+  idNumber: "OT-4857199",
 };
 
 export const NAV: NavItem[] = [

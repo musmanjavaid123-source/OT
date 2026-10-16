@@ -1,11 +1,12 @@
 {
-  "name": "temp-app",
-  "version": "0.1.0",
+  "name": "ottoman-portfolio",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "bundle:hostinger": "next build && powershell -Command \"Compress-Archive -Path out\\* -DestinationPath hostinger-deploy.zip -Force\"",
     "lint": "eslint"
   },
   "dependencies": {
