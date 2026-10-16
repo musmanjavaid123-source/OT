@@ -45,12 +45,12 @@ export const metadata: Metadata = {
   title: "Ottoman — Front-End Developer",
   description:
     "Front-End Developer and Web Development Specialist with experience at Lacoste and Mastercard. Skilled in responsive web design, UI/UX implementation, and modern web interfaces.",
-  metadataBase: new URL("https://ottoman.dev"),
+  metadataBase: new URL("https://ottoman.live"),
   openGraph: {
     title: "Ottoman — Front-End Developer",
     description:
       "Front-End Developer & Web Development Specialist. Lacoste, Mastercard, BS Information Technology.",
-    url: "https://ottoman.dev",
+    url: "https://ottoman.live",
     siteName: "Ottoman Portfolio",
     images: [
       {
