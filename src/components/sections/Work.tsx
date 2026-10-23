@@ -1,343 +1,581 @@
 "use client";
 
-import React, { useState } from "react";
-import { PROJECTS, ProjectItem } from "@/lib/data";
-import { TechLogo } from "@/components/ui/TechLogo";
+import React, { useState, useMemo, useEffect } from "react";
+import { PROJECT_REFERENCES, ProjectReference } from "@/lib/data";
+
+const COUNTRIES = [
+  "All",
+  "Dubai / UAE",
+  "Singapore",
+  "Hungary",
+  "Poland",
+  "Germany",
+  "Netherlands",
+  "United States",
+  "United Kingdom",
+  "Canada",
+] as const;
 
 export function Work() {
-  const [activeId, setActiveId] = useState<string>(PROJECTS[0].id);
+  const [selectedCountry, setSelectedCountry] = useState<string>("All");
+  const [selectedProject, setSelectedProject] = useState<ProjectReference | null>(null);
+
+  // Mobile specific state
+  const [featuredMobileIndex, setFeaturedMobileIndex] = useState<number>(0);
+  const [expandedMobileId, setExpandedMobileId] = useState<string | null>(null);
+
+  // Filtered references
+  const filteredReferences = useMemo(() => {
+    if (selectedCountry === "All") return PROJECT_REFERENCES;
+    return PROJECT_REFERENCES.filter((p) => p.country === selectedCountry);
+  }, [selectedCountry]);
+
+  // Country counts
+  const countryCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: PROJECT_REFERENCES.length };
+    PROJECT_REFERENCES.forEach((p) => {
+      counts[p.country] = (counts[p.country] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
+  // When country changes, reset mobile featured index & collapsed rows
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+    setExpandedMobileId(null);
+    // Find initial featured project for the selected country (prefer featured: true, else 0)
+    const matching = country === "All"
+      ? PROJECT_REFERENCES
+      : PROJECT_REFERENCES.filter((p) => p.country === country);
+    const featIdx = matching.findIndex((p) => p.featured);
+    setFeaturedMobileIndex(featIdx >= 0 ? featIdx : 0);
+  };
+
+  // Safe current featured reference on mobile
+  const currentFeatured = useMemo(() => {
+    if (filteredReferences.length === 0) return null;
+    const safeIdx = Math.min(Math.max(featuredMobileIndex, 0), filteredReferences.length - 1);
+    return filteredReferences[safeIdx];
+  }, [filteredReferences, featuredMobileIndex]);
+
+  const handleNextFeatured = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (filteredReferences.length <= 1) return;
+    setFeaturedMobileIndex((prev) => (prev + 1) % filteredReferences.length);
+  };
+
+  const handlePrevFeatured = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (filteredReferences.length <= 1) return;
+    setFeaturedMobileIndex((prev) => (prev - 1 + filteredReferences.length) % filteredReferences.length);
+  };
+
+  const toggleMobileRow = (id: string) => {
+    setExpandedMobileId((prev) => (prev === id ? null : id));
+  };
+
+  // Keyboard navigation for desktop modal
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSelectedProject(null);
+      }
+    }
+    if (selectedProject) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [selectedProject]);
 
   return (
     <section
       id="work"
-      aria-label="Selected Projects"
+      aria-label="International Projects"
       className="section-vertical relative w-full border-t border-[var(--line)]"
     >
       <div className="section-container">
-        {/* Section Header Tag */}
-        <div className="mb-12 rv" style={{ "--i": 0 } as React.CSSProperties}>
-          <p className="tag-mono mb-2">03 — Projects</p>
-          <h2 className="heading-display text-3xl sm:text-4xl lg:text-5xl">
-            Featured project <span className="serif-accent">systems.</span>
-          </h2>
-        </div>
+        {/* ========================================================= */}
+        {/* MOBILE PRESENTATION: COMPACT PROJECT EXPLORER (< lg)     */}
+        {/* ========================================================= */}
+        <div className="block lg:hidden">
+          {/* Part 1: Compact Introduction */}
+          <div className="mb-6 rv" style={{ "--i": 0 } as React.CSSProperties}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="tag-mono text-[10px]">03 — INTERNATIONAL PROJECTS</p>
+              <span className="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-white border border-[var(--line)] text-[var(--mute)]">
+                42 REFS · 09 MARKETS
+              </span>
+            </div>
+            <h2 className="heading-display text-2xl sm:text-3xl tracking-tight mb-2 text-[var(--ink)]">
+              A world of digital <span className="serif-accent">experiences.</span>
+            </h2>
+            <p className="font-sans text-xs sm:text-sm text-[var(--ink-2)] leading-relaxed">
+              42 references. 9 markets. Endless inspiration.
+            </p>
+          </div>
 
-        {/* Desktop Expanding Accordion Gallery (side-by-side flex) */}
-        <div className="hidden lg:flex gap-4 h-[min(78svh,620px)] w-full">
-          {PROJECTS.map((project) => {
-            const isOpen = activeId === project.id;
+          {/* Part 2: Compact Country Filters */}
+          <div className="mb-6">
+            <div className="w-full overflow-x-auto no-scrollbar pb-1">
+              <div className="flex items-center gap-1.5 min-w-max">
+                {COUNTRIES.map((country) => {
+                  const isActive = selectedCountry === country;
+                  const count = countryCounts[country] || 0;
+                  const formattedCount = count < 10 ? `0${count}` : `${count}`;
 
-            return (
-              <div
-                key={project.id}
-                onMouseEnter={() => setActiveId(project.id)}
-                onFocus={() => setActiveId(project.id)}
-                onClick={() => setActiveId(project.id)}
-                tabIndex={0}
-                role="button"
-                aria-expanded={isOpen}
-                aria-label={`${project.title} panel`}
-                className={`relative rounded-[28px] overflow-hidden border border-[var(--line)] transition-all duration-700 ease-[var(--ease)] focus-visible:outline-2 focus-visible:outline-[var(--ink)] ${
-                  isOpen
-                    ? "flex-[8] bg-white shadow-xl cursor-default"
-                    : "flex-[1] bg-[#fbfaf8] hover:bg-white cursor-pointer"
-                }`}
-              >
-                {isOpen ? (
-                  // OPEN PANEL: Left details + Right illustrative UI
-                  <div className="h-full w-full p-8 xl:p-10 flex flex-col md:flex-row gap-8 items-stretch overflow-hidden animate-in fade-in duration-500">
-                    {/* Left Details */}
-                    <div className="w-full md:w-1/2 flex flex-col justify-between overflow-y-auto pr-2">
-                      <div>
-                        {/* Number & Kicker */}
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--soft)] text-[var(--ink)]">
-                            {project.index}
-                          </span>
-                          <span className="tag-mono text-[var(--mute)]">
-                            {project.kicker}
-                          </span>
+                  return (
+                    <button
+                      key={country}
+                      onClick={() => handleCountryChange(country)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[11px] transition-all duration-200 border ${
+                        isActive
+                          ? "bg-[var(--ink)] text-white border-[var(--ink)] shadow-sm font-medium"
+                          : "bg-white text-[var(--ink-2)] border-[var(--line)] hover:bg-[#faf9f6]"
+                      }`}
+                    >
+                      <span>{country}</span>
+                      <span
+                        className={`text-[9px] px-1.5 py-0.2 rounded-full ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-[var(--soft)] text-[var(--mute)]"
+                        }`}
+                      >
+                        {formattedCount}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Part 3: Featured Project Card (One Large Card) */}
+          {currentFeatured && (
+            <div className="mb-8">
+              <div className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                {/* Compact Editorial Graphic Banner (~35% height) */}
+                <div className="w-full h-32 rounded-xl bg-gradient-to-br from-[#faf8f5] to-[#ece8e1] border border-[var(--line)] p-4 flex flex-col justify-between relative overflow-hidden mb-4">
+                  <div className="flex items-center justify-between z-10">
+                    <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/90 text-[var(--ink)] font-semibold border border-[var(--line)]">
+                      FEATURED REFERENCE
+                    </span>
+                    <span className="font-mono text-[11px] font-bold text-[var(--ink)]">
+                      {currentFeatured.index}
+                    </span>
+                  </div>
+
+                  {/* Watermark Logo / Typographic Accent */}
+                  <div className="z-10">
+                    <p className="font-mono text-[10px] tracking-widest text-[var(--mute)] uppercase">
+                      {currentFeatured.region}
+                    </p>
+                    <p className="font-sans font-bold text-lg text-[var(--ink)] truncate">
+                      {currentFeatured.name}
+                    </p>
+                  </div>
+
+                  {/* Abstract background grid decoration */}
+                  <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none font-mono text-5xl font-black select-none pr-2 pb-1">
+                    {currentFeatured.index}
+                  </div>
+                </div>
+
+                {/* Info & Category */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-mono text-xs font-semibold text-[var(--ink)]">
+                      {currentFeatured.country}
+                    </span>
+                    <span className="font-mono text-[10px] text-[var(--mute)] truncate max-w-[150px]">
+                      {currentFeatured.category}
+                    </span>
+                  </div>
+
+                  <p className="font-sans text-xs text-[var(--ink-2)] leading-relaxed mb-3">
+                    {currentFeatured.description}
+                  </p>
+
+                  {/* Concise Design Observation */}
+                  <div className="rounded-xl bg-[var(--paper)] border border-[var(--line)] p-3">
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--mute)] mb-0.5">
+                      Design Focus
+                    </p>
+                    <p className="font-sans text-xs text-[var(--ink)] font-medium leading-snug">
+                      {currentFeatured.designNotes}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions & Next Project Control */}
+                <div className="pt-3 border-t border-[var(--line)] flex items-center justify-between gap-2">
+                  <a
+                    href={currentFeatured.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--ink)] text-white font-mono text-xs font-semibold hover:bg-black transition-colors shadow-sm"
+                  >
+                    <span>VIEW WEBSITE</span>
+                    <span>↗</span>
+                  </a>
+
+                  {/* Next / Prev Controls */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handlePrevFeatured}
+                      aria-label="Previous featured project"
+                      className="w-8 h-8 rounded-full border border-[var(--line)] bg-white flex items-center justify-center text-[var(--ink)] hover:bg-[var(--soft)] transition-colors text-xs font-mono"
+                    >
+                      ←
+                    </button>
+                    <span className="font-mono text-[10px] text-[var(--mute)] px-1">
+                      {featuredMobileIndex + 1}/{filteredReferences.length}
+                    </span>
+                    <button
+                      onClick={handleNextFeatured}
+                      aria-label="Next featured project"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--soft)] transition-colors text-xs font-mono"
+                    >
+                      <span>Next</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Part 4 & 5: Compact Project List with Expandable Details */}
+          <div>
+            {/* List Header */}
+            <div className="flex items-center justify-between gap-2 mb-3 px-1">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)]">
+                {selectedCountry === "All"
+                  ? "EXPLORE ALL REFERENCES"
+                  : `EXPLORING ${selectedCountry.toUpperCase()}`}
+              </p>
+              <span className="font-mono text-[10px] text-[var(--mute)]">
+                {filteredReferences.length} REFERENCES
+              </span>
+            </div>
+
+            {/* Compact Rows */}
+            <div className="rounded-2xl border border-[var(--line)] bg-white overflow-hidden divide-y divide-[var(--line)]">
+              {filteredReferences.map((ref) => {
+                const isExpanded = expandedMobileId === ref.id;
+
+                return (
+                  <div key={ref.id} className="transition-colors">
+                    {/* Collapsed Row Header (Accessible Button) */}
+                    <button
+                      onClick={() => toggleMobileRow(ref.id)}
+                      aria-expanded={isExpanded}
+                      className="w-full py-3.5 px-4 text-left flex items-center justify-between gap-3 hover:bg-[#faf9f6] transition-colors focus-visible:outline-none focus-visible:bg-[#faf9f6]"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-mono text-[11px] font-semibold text-[var(--mute)] shrink-0 w-6">
+                          {ref.index}
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="font-sans font-bold text-sm text-[var(--ink)] truncate">
+                            {ref.name}
+                          </h4>
+                          <p className="font-mono text-[10px] text-[var(--mute)] truncate mt-0.5">
+                            {ref.country} · {ref.category}
+                          </p>
                         </div>
+                      </div>
 
-                        {/* Title */}
-                        <h3 className="font-sans font-bold text-2xl xl:text-3xl tracking-tight text-[var(--ink)] mb-4">
-                          {project.title}
-                        </h3>
+                      {/* Expand / Collapse Icon */}
+                      <div className="w-7 h-7 rounded-full bg-[var(--soft)] flex items-center justify-center text-[var(--ink)] shrink-0 transition-transform duration-200">
+                        <span className="font-mono text-xs">{isExpanded ? "−" : "+"}</span>
+                      </div>
+                    </button>
 
-                        {/* Description (verbatim from resume) */}
-                        <p className="font-sans text-sm xl:text-base text-[var(--ink-2)] leading-relaxed mb-6">
-                          {project.description}
+                    {/* Part 5: Expandable Project Details Inline */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-1 bg-[#fbfaf8] border-t border-[var(--line)] flex flex-col gap-3 animate-in fade-in duration-200">
+                        <p className="font-sans text-xs text-[var(--ink-2)] leading-relaxed pt-1">
+                          {ref.description}
                         </p>
 
-                        {/* 2-column feature list */}
-                        <div className="mb-6">
-                          <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)] mb-2.5">
-                            Key Capabilities
+                        <div className="rounded-xl bg-white border border-[var(--line)] p-3">
+                          <p className="font-mono text-[9px] uppercase tracking-wider text-[var(--mute)] mb-0.5">
+                            Design Focus
                           </p>
-                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-[var(--ink-2)]">
-                            {project.features.map((feature, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="text-[var(--mute)] mt-0.5">↳</span>
-                                <span className="leading-snug">{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <p className="font-sans text-xs text-[var(--ink)] font-medium leading-snug">
+                            {ref.designNotes}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="font-mono text-[10px] text-[var(--mute)]">
+                            {ref.referenceType === "website-reference" ? "Reference" : "Inspiration"}
+                          </span>
+                          <a
+                            href={ref.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--ink)] text-white font-mono text-xs font-semibold hover:bg-black transition-colors shadow-sm"
+                          >
+                            <span>VIEW WEBSITE</span>
+                            <span>↗</span>
+                          </a>
                         </div>
                       </div>
-
-                      {/* Tech Stack Chips */}
-                      <div className="pt-6 border-t border-[var(--line)]">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {project.tech.map((t) => {
-                            const logoKey = t.toLowerCase().replace(/[^a-z0-9]/g, "");
-                            return (
-                              <div
-                                key={t}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--paper)] text-[var(--ink)] font-mono text-xs border border-[var(--line)]"
-                              >
-                                <TechLogo logoKey={logoKey} size={14} />
-                                <span>{t}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Illustrative UI (pure CSS/JSX grayscale mockup) */}
-                    <div className="w-full md:w-1/2 rounded-2xl bg-[var(--paper)] border border-[var(--line)] p-4 flex flex-col justify-between relative overflow-hidden [clip-path:inset(0%_round_16px)]">
-                      {/* Illustrative badge */}
-                      <div className="absolute top-3 right-3 z-20">
-                        <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/90 text-[var(--mute)] border border-[var(--line)] shadow-sm">
-                          Illustrative UI
-                        </span>
-                      </div>
-
-                      {/* Mockup Screen based on Project */}
-                      <div className="w-full h-full flex flex-col justify-center">
-                        {project.id === "responsive-web-app" && <ResponsiveMockup />}
-                        {project.id === "database-driven-app" && <DatabaseMockup />}
-                        {project.id === "salesforce-dev-project" && <SalesforceMockup />}
-                      </div>
-                    </div>
+                    )}
                   </div>
-                ) : (
-                  // FOLDED SLIM SPINE
-                  <div className="h-full w-full py-8 px-4 flex flex-col justify-between items-center select-none">
-                    {/* Index */}
-                    <span className="font-mono text-xs font-semibold text-[var(--mute)]">
-                      {project.index}
-                    </span>
-
-                    {/* Vertical Title */}
-                    <span
-                      className="font-sans font-bold text-sm text-[var(--ink)] tracking-wider uppercase [writing-mode:vertical-lr] rotate-180 truncate max-h-[300px]"
-                    >
-                      {project.title}
-                    </span>
-
-                    {/* Plus Button */}
-                    <div className="w-8 h-8 rounded-full border border-[var(--line)] flex items-center justify-center text-[var(--ink)] group-hover:rotate-90 transition-transform duration-300">
-                      +
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Mobile Vertical Accordion */}
-        <div className="flex lg:hidden flex-col gap-4">
-          {PROJECTS.map((project) => {
-            const isOpen = activeId === project.id;
+        {/* ========================================================= */}
+        {/* DESKTOP PRESENTATION: PRESERVED EXACTLY AS IS (lg:block)   */}
+        {/* ========================================================= */}
+        <div className="hidden lg:block">
+          {/* Section Header */}
+          <div className="mb-10 rv" style={{ "--i": 0 } as React.CSSProperties}>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+              <p className="tag-mono">03 — INTERNATIONAL PROJECTS</p>
+              <span className="font-mono text-xs px-3 py-1 rounded-full bg-white border border-[var(--line)] text-[var(--mute)]">
+                42 REFERENCES / 09 MARKETS
+              </span>
+            </div>
+            <h2 className="heading-display text-3xl sm:text-4xl lg:text-5xl tracking-tight mb-4 text-[var(--ink)]">
+              A world of digital <span className="serif-accent">experiences.</span>
+            </h2>
+            <p className="font-sans text-base sm:text-lg text-[var(--ink-2)] max-w-3xl leading-relaxed">
+              Forty-two digital references across nine markets. Different industries,
+              different visual languages, and new ways to think about the web.
+            </p>
+          </div>
 
-            return (
-              <div
-                key={project.id}
-                className="rounded-2xl border border-[var(--line)] bg-white overflow-hidden transition-all shadow-sm"
-              >
+          {/* Filter Bar & Count Header */}
+          <div className="flex flex-col gap-6 mb-8">
+            <div className="flex items-center justify-between flex-wrap gap-4 pb-2">
+              <span className="font-mono text-xs text-[var(--mute)]">
+                Showing <span className="font-semibold text-[var(--ink)]">{filteredReferences.length}</span> of {PROJECT_REFERENCES.length} design archives
+              </span>
+              {selectedCountry !== "All" && (
                 <button
-                  onClick={() => setActiveId(isOpen ? "" : project.id)}
-                  aria-expanded={isOpen}
-                  className="w-full p-6 text-left flex items-center justify-between"
+                  onClick={() => setSelectedCountry("All")}
+                  className="font-mono text-xs text-[var(--mute)] hover:text-[var(--ink)] underline"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs font-semibold px-2 py-1 rounded bg-[var(--soft)] text-[var(--ink)]">
-                      {project.index}
-                    </span>
-                    <h3 className="font-sans font-bold text-lg text-[var(--ink)]">
-                      {project.title}
-                    </h3>
-                  </div>
-                  <span className="font-mono text-lg text-[var(--mute)]">
-                    {isOpen ? "−" : "+"}
-                  </span>
+                  Reset to All 42
                 </button>
+              )}
+            </div>
 
-                {isOpen && (
-                  <div className="px-6 pb-6 pt-2 border-t border-[var(--line)] flex flex-col gap-6 animate-in fade-in duration-300">
-                    <p className="font-sans text-sm text-[var(--ink-2)] leading-relaxed">
-                      {project.description}
+            {/* Horizontal Country Filter Bar */}
+            <div className="w-full overflow-x-auto no-scrollbar pb-2">
+              <div className="flex items-center gap-2 min-w-max">
+                {COUNTRIES.map((country) => {
+                  const isActive = selectedCountry === country;
+                  const count = countryCounts[country] || 0;
+                  const formattedCount = count < 10 ? `0${count}` : `${count}`;
+
+                  return (
+                    <button
+                      key={country}
+                      onClick={() => setSelectedCountry(country)}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 border ${
+                        isActive
+                          ? "bg-[var(--ink)] text-white border-[var(--ink)] shadow-sm font-medium"
+                          : "bg-white text-[var(--ink-2)] border-[var(--line)] hover:border-[var(--mute)] hover:bg-[#faf9f6]"
+                      }`}
+                    >
+                      <span>{country}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-[var(--soft)] text-[var(--mute)]"
+                        }`}
+                      >
+                        {formattedCount}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Reference Cards Grid (3 columns desktop) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredReferences.map((ref) => {
+              return (
+                <div
+                  key={ref.id}
+                  onClick={() => setSelectedProject(ref)}
+                  className="group relative rounded-2xl border border-[var(--line)] bg-white p-6 flex flex-col justify-between hover:shadow-lg hover:border-[var(--mute)] transition-all duration-300 cursor-pointer"
+                >
+                  {/* Top Bar: Index + Country + Category */}
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--soft)] text-[var(--ink)]">
+                          {ref.index}
+                        </span>
+                        <span className="font-mono text-[11px] text-[var(--mute)]">
+                          {ref.country}
+                        </span>
+                      </div>
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)] truncate max-w-[130px]">
+                        {ref.category}
+                      </span>
+                    </div>
+
+                    {/* Studio / Business Name */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <h3 className="font-sans font-bold text-xl text-[var(--ink)] group-hover:text-black transition-colors">
+                        {ref.name}
+                      </h3>
+                      <a
+                        href={ref.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title={`Open ${ref.name} in new tab`}
+                        className="w-8 h-8 rounded-full border border-[var(--line)] flex items-center justify-center text-[var(--mute)] group-hover:text-[var(--ink)] group-hover:border-[var(--ink)] transition-colors shrink-0"
+                      >
+                        <svg
+                          className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 17L17 7M17 7H7M17 7V17"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+
+                    {/* Brief description */}
+                    <p className="font-sans text-xs text-[var(--ink-2)] leading-relaxed mb-4 line-clamp-2">
+                      {ref.description}
                     </p>
 
-                    {/* Key features */}
-                    <ul className="space-y-1.5 font-sans text-xs text-[var(--ink-2)]">
-                      {project.features.map((f, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-[var(--mute)]">↳</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* Mini UI Mockup */}
-                    <div className="rounded-xl bg-[var(--paper)] border border-[var(--line)] p-4 relative">
-                      <span className="font-mono text-[8px] uppercase tracking-wider px-2 py-0.5 rounded bg-white text-[var(--mute)] border border-[var(--line)] absolute top-2 right-2">
-                        Illustrative UI
-                      </span>
-                      <div className="pt-4">
-                        {project.id === "responsive-web-app" && <ResponsiveMockup />}
-                        {project.id === "database-driven-app" && <DatabaseMockup />}
-                        {project.id === "salesforce-dev-project" && <SalesforceMockup />}
-                      </div>
-                    </div>
-
-                    {/* Tech Chips */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {project.tech.map((t) => (
-                        <span
-                          key={t}
-                          className="px-2.5 py-1 rounded-full bg-[var(--paper)] text-[var(--ink)] font-mono text-xs border border-[var(--line)]"
-                        >
-                          {t}
-                        </span>
-                      ))}
+                    {/* Design Takeaway Box */}
+                    <div className="rounded-xl bg-[var(--paper)] border border-[var(--line)] p-3 mb-4">
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)] mb-1">
+                        Design Focus
+                      </p>
+                      <p className="font-sans text-xs text-[var(--ink)] font-medium leading-snug">
+                        {ref.designNotes}
+                      </p>
                     </div>
                   </div>
-                )}
+
+                  {/* Bottom Action Footer */}
+                  <div className="pt-3 border-t border-[var(--line)] flex items-center justify-between text-xs font-mono">
+                    <span className="text-[10px] uppercase tracking-wider text-[var(--mute)]">
+                      {ref.referenceType === "website-reference" ? "Reference" : "Inspiration"}
+                    </span>
+                    <span className="text-[var(--ink)] font-semibold flex items-center gap-1 group-hover:underline">
+                      Explore Details →
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Detail Modal */}
+          {selectedProject && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setSelectedProject(null)}
+            >
+              <div
+                className="bg-white rounded-3xl max-w-xl w-full border border-[var(--line)] shadow-2xl p-6 sm:p-8 flex flex-col gap-6 relative animate-in zoom-in-95 duration-200 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--soft)] text-[var(--ink)]">
+                        {selectedProject.index}
+                      </span>
+                      <span className="font-mono text-xs text-[var(--mute)]">
+                        {selectedProject.country} • {selectedProject.region}
+                      </span>
+                    </div>
+                    <h3 className="font-sans font-bold text-2xl sm:text-3xl text-[var(--ink)]">
+                      {selectedProject.name}
+                    </h3>
+                    <p className="font-mono text-xs text-[var(--mute)] mt-1">
+                      {selectedProject.category}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProject(null)}
+                    className="w-9 h-9 rounded-full bg-[var(--soft)] border border-[var(--line)] flex items-center justify-center text-[var(--mute)] hover:text-[var(--ink)] hover:bg-[#eae8e3] transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <h4 className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)] mb-1.5">
+                      Overview & Purpose
+                    </h4>
+                    <p className="font-sans text-sm text-[var(--ink-2)] leading-relaxed">
+                      {selectedProject.description}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-[var(--paper)] border border-[var(--line)] p-4">
+                    <h4 className="font-mono text-[10px] uppercase tracking-wider text-[var(--mute)] mb-1.5">
+                      Design & Architectural Analysis
+                    </h4>
+                    <p className="font-sans text-sm text-[var(--ink)] font-medium leading-relaxed">
+                      {selectedProject.designNotes}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-mono text-[var(--mute)] pt-2 border-t border-[var(--line)]">
+                    <span>Type: Website Design Reference</span>
+                    <span className="text-[var(--ink)] font-semibold">Active External Archive</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--line)]">
+                  <button
+                    onClick={() => setSelectedProject(null)}
+                    className="px-4 py-2.5 rounded-full font-mono text-xs text-[var(--mute)] hover:text-[var(--ink)] transition-colors"
+                  >
+                    Close
+                  </button>
+                  <a
+                    href={selectedProject.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--ink)] text-white font-mono text-xs font-semibold hover:bg-black transition-all shadow-sm"
+                  >
+                    <span>VIEW WEBSITE</span>
+                    <span>↗</span>
+                  </a>
+                </div>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
       </div>
     </section>
-  );
-}
-
-// 1. Responsive App Mockup
-function ResponsiveMockup() {
-  return (
-    <div className="w-full bg-white rounded-xl border border-[var(--line)] p-4 shadow-sm font-mono text-xs">
-      {/* Browser Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-[var(--line)] mb-4">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-black/20" />
-          <span className="w-2.5 h-2.5 rounded-full bg-black/20" />
-          <span className="w-2.5 h-2.5 rounded-full bg-black/20" />
-        </div>
-        <span className="text-[10px] text-[var(--mute)] bg-[var(--paper)] px-3 py-0.5 rounded-full">
-          localhost:3000 / responsive
-        </span>
-        <span className="text-[10px] text-[var(--ink)] font-semibold">100% Fluid</span>
-      </div>
-
-      {/* Grid of wireframe cards */}
-      <div className="grid grid-cols-3 gap-2.5 mb-4">
-        <div className="h-16 rounded-lg bg-[var(--paper)] border border-[var(--line)] p-2 flex flex-col justify-between">
-          <div className="w-3/4 h-2 bg-black/15 rounded" />
-          <div className="w-1/2 h-1.5 bg-black/10 rounded" />
-        </div>
-        <div className="h-16 rounded-lg bg-[var(--paper)] border border-[var(--line)] p-2 flex flex-col justify-between">
-          <div className="w-2/3 h-2 bg-black/15 rounded" />
-          <div className="w-1/3 h-1.5 bg-black/10 rounded" />
-        </div>
-        <div className="h-16 rounded-lg bg-[var(--ink)] text-white p-2 flex flex-col justify-between">
-          <div className="w-3/4 h-2 bg-white/40 rounded" />
-          <div className="w-1/2 h-1.5 bg-white/20 rounded" />
-        </div>
-      </div>
-
-      {/* Breakpoint Metrics */}
-      <div className="flex items-center justify-between pt-2 border-t border-[var(--line)] text-[10px] text-[var(--mute)]">
-        <span>Desktop · 1440px</span>
-        <span>Tablet · 768px</span>
-        <span>Mobile · 375px</span>
-      </div>
-    </div>
-  );
-}
-
-// 2. Database App Mockup
-function DatabaseMockup() {
-  return (
-    <div className="w-full bg-white rounded-xl border border-[var(--line)] p-4 shadow-sm font-mono text-xs">
-      {/* Query Bar */}
-      <div className="bg-[#1a1a1a] text-[#ededed] p-2.5 rounded-lg mb-3 text-[11px] leading-tight flex items-center justify-between">
-        <span className="text-emerald-400">SELECT</span>
-        <span className="text-white/80 truncate mx-2">id, status, records FROM db</span>
-        <span className="text-white/40 text-[9px]">24ms</span>
-      </div>
-
-      {/* Data Table */}
-      <div className="border border-[var(--line)] rounded-lg overflow-hidden text-[10px]">
-        <div className="grid grid-cols-4 bg-[var(--paper)] p-2 font-semibold text-[var(--mute)] border-b border-[var(--line)]">
-          <span>RECORD_ID</span>
-          <span>ENTITY</span>
-          <span>OPERATION</span>
-          <span className="text-right">STATUS</span>
-        </div>
-        <div className="grid grid-cols-4 p-2 border-b border-[var(--line)]">
-          <span className="text-[var(--ink)] font-semibold">#09214</span>
-          <span>UserSchema</span>
-          <span>UPDATE</span>
-          <span className="text-right text-emerald-600 font-semibold">SUCCESS</span>
-        </div>
-        <div className="grid grid-cols-4 p-2 bg-[var(--paper)]/40 border-b border-[var(--line)]">
-          <span className="text-[var(--ink)] font-semibold">#09215</span>
-          <span>OrderData</span>
-          <span>INSERT</span>
-          <span className="text-right text-emerald-600 font-semibold">COMMITTED</span>
-        </div>
-        <div className="grid grid-cols-4 p-2">
-          <span className="text-[var(--ink)] font-semibold">#09216</span>
-          <span>Inventory</span>
-          <span>SELECT</span>
-          <span className="text-right text-emerald-600 font-semibold">RESOLVED</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 3. Salesforce Mockup
-function SalesforceMockup() {
-  return (
-    <div className="w-full bg-white rounded-xl border border-[var(--line)] p-4 shadow-sm font-mono text-xs">
-      {/* Salesforce Lightning Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-[var(--line)] mb-3">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#00a1e0]" />
-          <span className="text-[10px] font-bold text-[var(--ink)]">Developer Console</span>
-        </div>
-        <span className="text-[9px] text-[var(--mute)]">Apex Execution</span>
-      </div>
-
-      {/* Code Snippet Box */}
-      <div className="bg-[#111111] text-[#cccccc] p-3 rounded-lg text-[10px] leading-relaxed mb-3">
-        <p className="text-sky-300">public class AccountTriggerHandler &#123;</p>
-        <p className="pl-3 text-white/70">
-          List&lt;Account&gt; accs = [SELECT Id FROM Account];
-        </p>
-        <p className="pl-3 text-white/50">// Trigger business logic</p>
-        <p className="text-sky-300">&#125;</p>
-      </div>
-
-      {/* Architecture Row */}
-      <div className="flex items-center justify-between pt-2 border-t border-[var(--line)] text-[10px] text-[var(--mute)]">
-        <span>SOQL Query: OK</span>
-        <span>Standard Objects: Synced</span>
-      </div>
-    </div>
   );
 }

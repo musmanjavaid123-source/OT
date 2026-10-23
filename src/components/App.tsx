@@ -10,6 +10,7 @@ import { Certifications } from "@/components/sections/Certifications";
 import { Experience } from "@/components/sections/Experience";
 import { Contact } from "@/components/sections/Contact";
 import { RevealObserver } from "@/components/ui/RevealObserver";
+import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 
 export function App() {
   return (
@@ -30,6 +31,9 @@ export function App() {
         <Experience />
         <Contact />
       </main>
+
+      {/* Floating WhatsApp Contact Button */}
+      <WhatsAppButton />
     </div>
   );
 }

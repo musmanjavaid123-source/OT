@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { SmoothScrollProvider } from "@/lib/scroll";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const interTight = localFont({
   src: "../fonts/InterTight-Variable.woff2",
@@ -87,7 +89,11 @@ export default function RootLayout({
       className={`${interTight.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased selection:bg-[#0d0d0d] selection:text-[#f4f2ee]">
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <SmoothScrollProvider>
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </SmoothScrollProvider>
       </body>
     </html>
   );
